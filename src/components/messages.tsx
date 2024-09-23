@@ -1,11 +1,4 @@
 import React from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
 import ChatMessage from "./chat-message";
 import { Message } from "ai";
 
@@ -16,10 +9,8 @@ interface Props {
 const ChatMessages = ({ messages }: Props) => {
   return (
     <div
-      className={
-        "flex-1 flex h-full overflow-y-auto scroll-smooth flex-col gap-2 shadow-inner p-4 shadow-blue-600 rounded-xl" +
-        ""
-      }
+      className={`
+        flex-1 flex h-full p-1 overflow-y-auto custom-scrollbar scroll-smooth flex-col gap-2 md:p-4 md:rounded-xl`}
     >
       {messages.map((msg, i) => (
         <ChatMessage

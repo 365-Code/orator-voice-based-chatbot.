@@ -2,7 +2,7 @@
 
 import { Message } from "ai";
 import React, { useEffect, useRef } from "react";
-import { Card, CardContent, CardDescription } from "./ui/card";
+import { Card, CardDescription } from "@/components/ui/card";
 
 interface Props {
   message: Message;
@@ -24,9 +24,9 @@ const ChatMessage = ({ message, index, len }: Props) => {
       ref={index == len ? scrollRef : null}
       className={` ${
         message.role == "user"
-          ? "ml-auto "
-          : "mr-auto border-none outline-none bg-blue-600/80 shadow-md shadow-blue-500"
-      } p-4 max-w-[90%]`}
+          ? "ml-auto shadow-sm shadow-primary/20"
+          : "mr-auto bg-blue-600/90 shadow-md shadow-blue-800/40"
+      } p-4 max-w-[90%] border-none`}
     >
       <CardDescription
         className={`font-medium ${

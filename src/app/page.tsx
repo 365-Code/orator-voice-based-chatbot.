@@ -1,4 +1,5 @@
-import Chat from "@/components/chat";
+// import VoiceChat from "@/components/chat";
+import VoiceChat from "@/components/voice-chat";
 import React from "react";
 
 declare global {
@@ -9,10 +10,11 @@ declare global {
 
 const Page = () => {
   return (
-    <div>
-      <Chat />
-    </div>
+    <main className="h-screen p-4 sm:p-6">
+      <VoiceChat />
+    </main>
   );
+  // return <VoiceChat />;
 };
 
 export default Page;

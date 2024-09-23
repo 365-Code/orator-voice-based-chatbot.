@@ -1,156 +1,110 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription } from "@/components/ui/card";
-import { AudioWaveform, Mic, Pause, Play } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import useWebSR from "@/hooks/use-web-sr";
+import { Pause, Play, X } from "lucide-react";
+import Image from "next/image";
+import React, { useState } from "react";
 
 type Props = {
   recordingCompleted: (input: string) => void;
 };
 
-const tsc = `
-You are a friendly, helpful, and knowledgeable chatbot designed to assist users in a conversational manner. When responding:\n
-Tone: Use a warm and welcoming tone. Your voice should be clear, friendly, and approachable.\n
-Language: Keep your language simple, concise, and easy to understand. Avoid jargon unless necessary, and if you do use it, provide a brief explanation.\n
-Context Awareness: Tailor your responses to the user's input. If the user asks a question, provide a direct answer. If the user makes a statement, acknowledge it and engage in a relevant follow-up.\n
-Clarification: If a user's question or statement is unclear, politely ask for clarification. For example, 'Could you please clarify what you mean by...?'\n
-Encouragement: Encourage the user to continue the conversation by asking relevant follow-up questions or offering additional information.\n
-Engagement: Vary your responses to maintain engagement. Use different sentence structures and introduce small variations in your phrasing to keep the conversation natural.\n
-Politeness: Always be polite and respectful, even if the user is not. Stay calm and composed, redirecting any negative interactions in a positive direction.\n
-Ending Conversations: When concluding a conversation, do so politely and offer further assistance. For example, "Is there anything else I can help you with today?"\n
-Examples:\n
-Greeting: "Hi there! How can I assist you today?"\n
-Question Response: "Sure, I can help with that! What specific information are you looking for?"\n
-Clarification: "I'm not quite sure I understand. Could you please clarify?"\n
-Engagement: "That's interesting! Can you tell me more about that?"\n
-Always aim to make the conversation feel natural and enjoyable for the user.
-`;
-
 const Recorder = ({ recordingCompleted }: Props) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isRecordingComplete, setIsRecordingComplete] = useState(true);
-  const [transcript, setTranscript] = useState("");
-  const [fullTranscript, setFullTranscript] = useState("");
+  const [start, setStart] = useState(false);
 
-  const recordRef = useRef<any | null>(null);
-
-  useEffect(() => {
-    if (recordRef.current) {
-      recordRef.current.stop();
-      stopRecording();
-    }
-  }, []);
-
-  const startRecording = () => {
-    setIsRecording(true);
-    setIsRecordingComplete(false);
-    recordRef.current = new window.webkitSpeechRecognition();
-    recordRef.current.continuous = true;
-    recordRef.current.interimResults = true;
-
-    recordRef.current.onresult = (e: any) => {
-      let interimTranscript = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          setFullTranscript((prev) => prev + e.results[i][0].transcript);
-        } else {
-          interimTranscript += e.results[i][0].transcript;
-        }
-      }
-      setTranscript(interimTranscript);
-    };
-
-    recordRef.current.start();
-  };
-
-  const stopRecording = () => {
-    setIsRecording(false);
-    setIsRecordingComplete(true);
-    setTranscript("");
-  };
-
-  const toggleRecording = () => {
-    if (!recordRef.current) return;
-    if (isRecording) {
-      recordRef.current.stop();
-      setIsRecording(false);
-    } else {
-      setIsRecording(true);
-      recordRef.current.start();
-    }
-  };
+  const {
+    startRecording,
+    stopRecording,
+    fullTranscript,
+    toggleRecording,
+    isRecording,
+    isRecordingComplete,
+  } = useWebSR({ continuous: true });
 
   const handleRecordingComplete = () => {
-    if (!recordRef.current) return;
-
-    recordRef.current.stop();
-
-    console.log("FTSC = ", fullTranscript);
-
-    // Handle the final transcript with all recognized speech
-    if (fullTranscript) {
-      recordingCompleted(fullTranscript);
-      setFullTranscript("");
-    }
-
-    stopRecording();
+    setTimeout(() => {
+      setStart(true);
+      if (fullTranscript) {
+        recordingCompleted(fullTranscript);
+      }
+      stopRecording();
+    }, 1000);
   };
 
   return (
-    <div className="text-center flex flex-row justify-center items-center gap-2">
-      <Card className="p-2 scroll-smooth max-w-full text-nowrap overflow-x-scroll w-[350px]">
-        <CardDescription className="w-full">
-          {!isRecording && isRecordingComplete
-            ? "Talk with your friendly AI"
-            : transcript
-            ? transcript
-            : "Listening..."}
+    <div className="flex flex-col items-center gap-4">
+      <Card className="text-center line-clamp-1 px-4 py-3 shadow-lg shadow-primary-foreground rounded-lg">
+        <CardDescription className=" text-sm md:text-base font-medium">
+          {/* {interimTranscript
+            ? interimTranscript */}
+          {fullTranscript ? (
+            fullTranscript
+          ) : isRecording ? (
+            "Listening..."
+          ) : start ? (
+            "Start Recording"
+          ) : (
+            <span className="italic">Hello! How can I assist you today?</span>
+          )}
         </CardDescription>
       </Card>
-      <div className="text-center flex flex-row gap-2 justify-center items-center">
-        {!isRecording && isRecordingComplete ? (
-          <>
-            <Button
-              onClick={startRecording}
-              className="bg-black flex flex-col text-white relative w-[40px] h-[40px] shadow-sm rounded-full"
+      <TooltipProvider>
+        <div className="flex items-center justify-center gap-2">
+          <Tooltip>
+            <TooltipTrigger
+              onClick={toggleRecording}
+              className={`relative w-[50px] h-[50px] bg-primary text-primary-foreground rounded-full flex items-center justify-center transition-all transform ${
+                isRecording ? "scale-110" : "scale-100"
+              } ${!isRecordingComplete ? "block" : "hidden"}`}
+              aria-label={isRecording ? "Pause" : "Play"}
             >
-              <Mic
-                size={25}
-                className={`${isRecording ? "opacity-0" : "opacity-100"}`}
-              />
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              onClick={handleRecordingComplete}
-              className="flex flex-col text-white w-[40px] h-[40px] shadow-sm rounded-full"
-            >
-              <AudioWaveform
-                size={25}
-                className={` ${
-                  !isRecordingComplete ? "opacity-100 " : "opacity-0"
-                } ${isRecording ? "animate-pulse" : ""}`}
-              />
-              {/* <span>Stop</span> */}
-            </Button>
-            <Button className="relative" onClick={toggleRecording}>
-              <Play
-                size={25}
-                className={` ${
-                  isRecording ? "opacity-0" : "opacity-100"
-                } transition-all`}
-              />
-              <Pause
-                size={25}
-                className={` ${
-                  isRecording ? "opacity-100" : "opacity-0"
-                } absolute transition-all`}
-              />
-            </Button>
-          </>
-        )}
-      </div>
+              {isRecording ? <Pause size={20} /> : <Play size={20} />}
+            </TooltipTrigger>
+            <TooltipContent>{isRecording ? "Pause" : "Play"}</TooltipContent>
+          </Tooltip>
+          <Button
+            onClick={isRecording ? handleRecordingComplete : startRecording}
+            className="relative w-[120px] h-[120px] shadow-md rounded-full hover:bg-black bg-black overflow-hidden"
+            aria-label={isRecording ? "Stop Recording" : "Start Recording"}
+          >
+            <Image
+              unoptimized={true}
+              src={
+                isRecording
+                  ? "/assets/aura-orb.gif"
+                  : isRecordingComplete
+                  ? "/assets/aura-idle.gif"
+                  : "/assets/aura-listening.gif"
+              }
+              alt={isRecording ? "aura-listening" : "aura-idle"}
+              width={500}
+              height={500}
+              className="w-full h-full pointer-events-none object-scale-down object-center absolute scale-[2] top-0 left-0"
+            />
+          </Button>
+          {!isRecordingComplete && (
+            <Tooltip>
+              <TooltipTrigger
+                onClick={stopRecording}
+                className={`relative w-[50px] h-[50px] bg-red-500 hover:bg-red-600  rounded-full flex items-center justify-center transition-all transform ${
+                  !isRecordingComplete ? "visible" : "invisible"
+                }`}
+                aria-label={"Stop"}
+              >
+                <X size={20} />
+              </TooltipTrigger>
+              <TooltipContent>Stop</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </TooltipProvider>
     </div>
   );
 };

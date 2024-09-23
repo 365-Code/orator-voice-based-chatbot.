@@ -4,7 +4,7 @@ import { createClient } from "@deepgram/sdk";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { content: text } = body;
+    const { content: text, voice } = body;
 
     const deepgramApiKey =
       process.env.DEEPGRAM_API_KEY || "YOUR_DEEPGRAM_API_KEY";
@@ -13,8 +13,7 @@ export async function POST(req: NextRequest) {
     const response = await deepgram.speak.request(
       { text },
       {
-        // model: "aura-asteria-en",
-        model: "aura-orpheus-en",
+        model: voice || "aura-orpheus-en",
         encoding: "linear16",
         container: "wav",
       }
